@@ -10,6 +10,11 @@ class DepartmentCreate(BaseModel):
     name: str = Field(..., min_length=1)
 
 
+class DepartmentBulkCreate(BaseModel):
+    """Bulk create departments by name. Duplicates (in body or DB) are skipped (counted as failed)."""
+    names: list[str] = Field(..., min_length=1)
+
+
 class DepartmentResponse(BaseModel):
     id: int
     name: str
@@ -55,6 +60,11 @@ class EmployeeResponse(BaseModel):
     department: str = Field(..., alias="departmentName")
 
     model_config = {"from_attributes": True, "populate_by_name": True}
+
+
+class EmployeeBulkCreate(BaseModel):
+    """Bulk create employees. Duplicates (employee_id/email) in body or DB are skipped (counted as failed)."""
+    employees: list[EmployeeCreate] = Field(..., min_length=1)
 
 
 # --- Attendance ---

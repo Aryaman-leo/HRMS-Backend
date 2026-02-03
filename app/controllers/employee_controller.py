@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models import Employee
-from app.schemas import EmployeeCreate, EmployeeResponse
+from app.schemas import BulkResult, EmployeeCreate, EmployeeResponse
 from app.services import employee_service, department_service
 
 
@@ -48,3 +48,39 @@ def delete_employee(id_or_employee_id: str, db: Session) -> None:
         raise HTTPException(status_code=404, detail="Employee not found.")
     employee_service.delete(db, employee)
     return None
+
+
+def bulk_create_employees(db: Session, employees: list[EmployeeCreate]) -> BulkResult:
+    """Insert all new employees in one transaction. Duplicates (employee_id/email in list or DB) are skipped."""
+    created = failed = 0
+    seen_ids: set[str] = set()
+    seen_emails: set[str] = set()
+    for item in employees:
+        eid = (item.employee_id or "").strip()
+        email = (item.email or "").strip().lower()
+        if not eid or not email:
+            failed += 1
+            continue
+        if eid in seen_ids or email in seen_emails:
+            failed += 1
+            continue
+        if employee_service.get_by_employee_id(db, eid) or employee_service.get_by_email(db, email):
+            failed += 1
+            continue
+        dept = department_service.get_by_id(db, item.department_id)
+        if not dept:
+            failed += 1
+            continue
+        db.add(
+            Employee(
+                employee_id=eid,
+                full_name=(item.full_name or "").strip(),
+                email=email,
+                department_id=item.department_id,
+            )
+        )
+        seen_ids.add(eid)
+        seen_emails.add(email)
+        created += 1
+    db.commit()
+    return BulkResult(created=created, updated=0, failed=failed)

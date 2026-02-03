@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Department
 from app.schemas import (
+    BulkResult,
     DepartmentCreate,
     DepartmentResponse,
     DepartmentWithEmployeesResponse,
@@ -52,3 +53,26 @@ def delete_department(id: int, db: Session) -> None:
             detail="Cannot delete department that has employees. Reassign or remove employees first.",
         )
     return None
+
+
+def bulk_create_departments(db: Session, names: list[str]) -> BulkResult:
+    """Insert all new department names in one transaction. Duplicates (in list or DB) are skipped."""
+    created = failed = 0
+    seen: set[str] = set()
+    for name in names:
+        n = (name or "").strip()
+        if not n:
+            failed += 1
+            continue
+        key = n.lower()
+        if key in seen:
+            failed += 1
+            continue
+        if department_service.get_by_name(db, n):
+            failed += 1
+            continue
+        db.add(Department(name=n))
+        seen.add(key)
+        created += 1
+    db.commit()
+    return BulkResult(created=created, updated=0, failed=failed)
