@@ -6,8 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
 from app.db_migrations import ensure_employees_department_id, ensure_employees_email_unique
-from app.models import Attendance, Department, Employee  # noqa: F401 - register tables with Base
-from app.routers import attendance, departments, employees
+from app.models import AdminLog, Attendance, Department, Employee  # noqa: F401 - register tables with Base
+from app.routers import admin_logs, attendance, departments, employees
 
 
 @asynccontextmanager
@@ -34,6 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(admin_logs.router, prefix="/api")
 app.include_router(departments.router, prefix="/api")
 app.include_router(employees.router, prefix="/api")
 app.include_router(attendance.router, prefix="/api")

@@ -1,6 +1,7 @@
 """SQLAlchemy models."""
+from app.models.admin_log import AdminLog
+from app.models.attendance import Attendance
 from app.models.department import Department
 from app.models.employee import Employee
-from app.models.attendance import Attendance
 
-__all__ = ["Department", "Employee", "Attendance"]
+__all__ = ["AdminLog", "Attendance", "Department", "Employee"]

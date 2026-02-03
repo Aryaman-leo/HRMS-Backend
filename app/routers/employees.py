@@ -28,6 +28,11 @@ def create_employee(body: EmployeeCreate, db: Session = Depends(get_db)):
     return employee_controller.create_employee(body, db)
 
 
+@router.delete("/{id_or_employee_id}", status_code=204)
+def delete_employee(id_or_employee_id: str, db: Session = Depends(get_db)):
+    return employee_controller.delete_employee(id_or_employee_id, db)
+
+
 @router.post("/bulk", response_model=BulkResult)
 def bulk_create_employees(body: EmployeeBulkCreate, db: Session = Depends(get_db)):
     """Bulk create employees from JSON: body.employees = [{ employeeId, fullName, email, departmentId }, ...]."""

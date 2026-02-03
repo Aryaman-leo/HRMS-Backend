@@ -12,7 +12,7 @@ from app.schemas import (
     DepartmentWithEmployeesResponse,
     EmployeeSummary,
 )
-from app.services import department_service
+from app.services import admin_log_service, department_service
 
 
 def _department_with_employees_response(dept: Department) -> DepartmentWithEmployeesResponse:
@@ -38,6 +38,9 @@ def create_department(body: DepartmentCreate, db: Session) -> DepartmentResponse
     if existing:
         raise HTTPException(status_code=409, detail="A department with this name already exists.")
     dept = department_service.create(db, body)
+    admin_log_service.create(
+        db, "create", "department", dept.id, f"Created department: {body.name.strip()}"
+    )
     return DepartmentResponse.model_validate(dept)
 
 
@@ -45,6 +48,7 @@ def delete_department(id: int, db: Session) -> None:
     department = department_service.get_by_id(db, id)
     if not department:
         raise HTTPException(status_code=404, detail="Department not found.")
+    name = department.name
     try:
         department_service.delete(db, department)
     except IntegrityError:
@@ -52,6 +56,7 @@ def delete_department(id: int, db: Session) -> None:
             status_code=400,
             detail="Cannot delete department that has employees. Reassign or remove employees first.",
         )
+    admin_log_service.create(db, "delete", "department", id, f"Deleted department: {name}")
     return None
 
 
@@ -75,4 +80,8 @@ def bulk_create_departments(db: Session, names: list[str]) -> BulkResult:
         seen.add(key)
         created += 1
     db.commit()
+    if created:
+        admin_log_service.create(
+            db, "bulk_create", "department", None, f"Bulk created {created} department(s)"
+        )
     return BulkResult(created=created, updated=0, failed=failed)

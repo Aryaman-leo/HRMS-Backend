@@ -1,4 +1,5 @@
 """Pydantic request/response models for API."""
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field
@@ -113,3 +114,16 @@ class BulkResult(BaseModel):
     created: int = 0
     updated: int = 0
     failed: int = 0
+
+
+# --- Admin log ---
+
+class AdminLogResponse(BaseModel):
+    id: int
+    created_at: datetime = Field(..., alias="createdAt")
+    action: str
+    entity_type: str = Field(..., alias="entityType")
+    entity_id: str | None = Field(None, alias="entityId")
+    details: str | None = None
+
+    model_config = {"from_attributes": True, "populate_by_name": True}

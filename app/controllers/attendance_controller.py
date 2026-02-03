@@ -9,7 +9,7 @@ from app.schemas import (
     AttendanceSummaryItem,
     BulkResult,
 )
-from app.services import attendance_service, employee_service
+from app.services import admin_log_service, attendance_service, employee_service
 
 
 def list_attendance(
@@ -33,8 +33,16 @@ def create_attendance(body: AttendanceCreate, db: Session) -> AttendanceResponse
     dept_name = emp.department.name if getattr(emp, "department", None) else None
     if existing:
         attendance_service.update_status(db, existing, body.status)
+        admin_log_service.create(
+            db, "update", "attendance", body.employee_id,
+            f"Updated attendance: {emp.full_name} on {body.date} → {body.status}",
+        )
         return attendance_service.to_response(existing, emp.full_name, dept_name)
     rec = attendance_service.create(db, body.employee_id, body.date, body.status)
+    admin_log_service.create(
+        db, "create", "attendance", body.employee_id,
+        f"Marked attendance: {emp.full_name} on {body.date} → {body.status}",
+    )
     return attendance_service.to_response(rec, emp.full_name, dept_name)
 
 
@@ -50,4 +58,9 @@ def bulk_attendance(body: AttendanceBulkCreate, db: Session) -> BulkResult:
             created += 1
         else:
             updated += 1
+    if created or updated:
+        admin_log_service.create(
+            db, "bulk_create", "attendance", None,
+            f"Bulk attendance for {body.date}: {created} created, {updated} updated",
+        )
     return {"created": created, "updated": updated, "failed": failed}

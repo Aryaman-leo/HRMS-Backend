@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Employee
 from app.schemas import BulkResult, EmployeeCreate, EmployeeResponse
-from app.services import employee_service, department_service
+from app.services import admin_log_service, department_service, employee_service
 
 
 def _employee_response(emp: Employee) -> EmployeeResponse:
@@ -35,6 +35,10 @@ def create_employee(body: EmployeeCreate, db: Session) -> EmployeeResponse:
     if not dept:
         raise HTTPException(status_code=400, detail="Department not found.")
     emp = employee_service.create(db, body)
+    admin_log_service.create(
+        db, "create", "employee", emp.employee_id,
+        f"Created employee: {emp.full_name} ({emp.employee_id})",
+    )
     return _employee_response(emp)
 
 
@@ -46,7 +50,9 @@ def delete_employee(id_or_employee_id: str, db: Session) -> None:
         employee = employee_service.get_by_employee_id(db, id_or_employee_id)
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found.")
+    eid, name = employee.employee_id, employee.full_name
     employee_service.delete(db, employee)
+    admin_log_service.create(db, "delete", "employee", eid, f"Deleted employee: {name} ({eid})")
     return None
 
 
@@ -83,4 +89,8 @@ def bulk_create_employees(db: Session, employees: list[EmployeeCreate]) -> BulkR
         seen_emails.add(email)
         created += 1
     db.commit()
+    if created:
+        admin_log_service.create(
+            db, "bulk_create", "employee", None, f"Bulk created {created} employee(s)"
+        )
     return BulkResult(created=created, updated=0, failed=failed)
