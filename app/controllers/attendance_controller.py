@@ -2,12 +2,27 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.schemas import AttendanceBulkCreate, AttendanceCreate, AttendanceResponse, BulkResult
+from app.schemas import (
+    AttendanceBulkCreate,
+    AttendanceCreate,
+    AttendanceResponse,
+    AttendanceSummaryItem,
+    BulkResult,
+)
 from app.services import attendance_service, employee_service
 
 
-def list_attendance(db: Session) -> list[AttendanceResponse]:
-    return attendance_service.get_all_with_employee_name(db)
+def list_attendance(
+    db: Session,
+    date_from: str | None = None,
+    date_to: str | None = None,
+) -> list[AttendanceResponse]:
+    return attendance_service.get_all_with_employee_name(db, date_from=date_from, date_to=date_to)
+
+
+def list_attendance_summary(db: Session) -> list[AttendanceSummaryItem]:
+    rows = attendance_service.get_attendance_summary(db)
+    return [AttendanceSummaryItem(**r) for r in rows]
 
 
 def create_attendance(body: AttendanceCreate, db: Session) -> AttendanceResponse:

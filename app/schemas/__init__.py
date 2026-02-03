@@ -99,6 +99,16 @@ class AttendanceResponse(BaseModel):
     model_config = {"from_attributes": True, "populate_by_name": True}
 
 
+class AttendanceSummaryItem(BaseModel):
+    """Per-employee present/absent day counts."""
+    employee_id: str = Field(..., alias="employeeId")
+    employee_name: str = Field(..., alias="employeeName")
+    present_days: int = Field(0, alias="presentDays")
+    absent_days: int = Field(0, alias="absentDays")
+
+    model_config = {"populate_by_name": True}
+
+
 class BulkResult(BaseModel):
     created: int = 0
     updated: int = 0
