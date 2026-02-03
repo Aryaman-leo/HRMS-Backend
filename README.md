@@ -1,113 +1,21 @@
-# HRMS Lite Backend
+# HRMS Lite – Backend
 
-FastAPI + SQLite backend for the HRMS Lite frontend. Exposes REST APIs for managing departments, employees, and attendance.
+FastAPI + SQLite backend for the HRMS Lite frontend.  
+Provides REST APIs for managing employees, departments, and attendance.
 
-## Tech stack
+---
 
-- **Framework**: FastAPI
-- **Database**: SQLite (via SQLAlchemy)
-- **ORM**: SQLAlchemy 2.x
-- **Validation**: Pydantic
-- **Server**: Uvicorn
+## Tech Stack
 
-## Project structure
+- FastAPI  
+- SQLite  
+- SQLAlchemy  
+- Pydantic  
+- Uvicorn  
 
-- `app/models/` – SQLAlchemy models (`Department`, `Employee`, `Attendance`)
-- `app/schemas/` – Pydantic request/response models
-- `app/services/` – Business logic and DB operations (no HTTP concerns)
-- `app/controllers/` – HTTP layer: validate, map to services, return responses
-- `app/routers/` – Route definitions; delegate to controllers
-- `app/database.py` – DB engine, session factory, `get_db` dependency
-- `app/main.py` – FastAPI app, CORS, router registration, lifespan
+---
 
-Flow: **Router → Controller → Service → Model/DB**.
+## Project Structure
 
-## Setup
-
-1. **Create and activate a virtual environment** (recommended):
-
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate   # Windows
-   # source .venv/bin/activate   # macOS/Linux
-   ```
-
-2. **Install dependencies**:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure database (optional)**:
-
-   By default the app uses:
-
-   ```text
-   DATABASE_URL=sqlite:///./hrms.db
-   ```
-
-   To override it, create a `.env` file in the backend folder and set:
-
-   ```text
-   DATABASE_URL=sqlite:///./custom-path.db
-   ```
-
-## Run
-
-1. **Seed the database** (departments, Indian employees, sample attendance). If you had an older schema, delete `hrms.db` first so tables are recreated:
-
-   ```bash
-   python seed.py
-   ```
-
-2. **Start the API server**:
-
-   ```bash
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
-
-   The API will be available at: `http://localhost:8000`
-
-## CORS / frontend integration
-
-This backend allows CORS for:
-
-- `http://localhost:5173`
-- `http://127.0.0.1:5173`
-
-Point your frontend to:
-
-```text
-VITE_API_URL=http://localhost:8000
-```
-
-## API summary
-
-_Paths are prefixed with `/api`._
-
-### Departments
-
-- `GET /api/departments` – List all departments
-- `POST /api/departments` – Create a department  
-  Body: `{ "name": string }`
-- `DELETE /api/departments/{id}` – Delete a department (fails if it has employees)
-
-### Employees
-
-- `GET /api/employees` – List all employees (includes department name)
-- `POST /api/employees` – Create an employee  
-  Body: `{ "employeeId", "fullName", "email", "departmentId" }`
-- `DELETE /api/employees/{id}` – Delete by numeric `id` or `employeeId` string
-
-### Attendance
-
-- `GET /api/attendance` – List attendance records (with employee name)
-- `POST /api/attendance` – Create/update one record  
-  Body: `{ "employeeId", "date", "status" }`
-- `POST /api/attendance/bulk` – Bulk create/update records  
-  Body: `{ "date", "records": [{ "employeeId", "status" }, ...] }`
-
-### Error format
-
-Error responses return JSON with a `detail` field (or `message` / `error`), which the frontend can display directly.
+Separation of concerns with a clean layered architecture:
 
